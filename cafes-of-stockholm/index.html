@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cafes of Stockholm</title>
+<meta name="description" content="A map of Stockholm's cafés that shows which ones are open at the time you choose.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%236f4323' d='M5 9h18v9a7 7 0 0 1-7 7h-4a7 7 0 0 1-7-7zM23 11h2a4 4 0 0 1 0 8h-2v-2.500h2a1.500 1.500 0 0 0 0-3h-2z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map" aria-label="Map of cafés in Stockholm"></div>
+
+<section id="panel" class="card-surface">
+  <header>
+    <h1>Cafes of Stockholm</h1>
+    <a class="about-link" href="about.html">About</a>
+    <p id="count" aria-live="polite">Loading cafés…</p>
+  </header>
+  <label class="switch"><input type="checkbox" role="switch" data-toggle="specialty"><span>Specialty coffee</span><a class="info" href="about.html#specialty" aria-label="What is specialty coffee?" title="What is specialty coffee?">?</a><em data-count="specialty"></em></label>
+  <details id="filters">
+    <summary>Filters and legend</summary>
+    <fieldset class="toggles">
+      <legend>Show</legend>
+      <label><input type="checkbox" data-toggle="cafes"><canvas data-icon="cup-open" width="48" height="48" aria-hidden="true"></canvas><span>Cafés</span><em data-count="cafe"></em></label>
+      <label><input type="checkbox" data-toggle="bakeries"><canvas data-icon="croissant-open" width="48" height="48" aria-hidden="true"></canvas><span>Bakeries</span><em data-count="bakery"></em></label>
+    </fieldset>
+    <fieldset class="toggles">
+      <legend>Only</legend>
+      <label><input type="checkbox" data-toggle="outdoor"><span>Outdoor seating</span><em data-count="outdoor"></em></label>
+      <label><input type="checkbox" data-toggle="independent"><span>Independents, no chains</span><em data-count="independent"></em></label>
+      <label><input type="checkbox" data-toggle="withHours"><span>With opening hours</span><em data-count="withHours"></em></label>
+    </fieldset>
+    <ul class="legend">
+      <li><canvas data-icon="cup-open" data-steam width="48" height="48"></canvas>Open</li>
+      <li><canvas data-icon="cup-closed" width="48" height="48"></canvas>Closed</li>
+      <li><canvas data-icon="cup-unknown" width="48" height="48"></canvas>No hours</li>
+    </ul>
+    <p class="credit">Data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, updated <span id="snapshot"></span>. <a href="about.html">How this map works</a></p>
+  </details>
+</section>
+
+<div id="toolbar" class="card-surface" role="group" aria-label="Map view">
+  <button type="button" data-style="light" aria-pressed="true">Light</button>
+  <button type="button" data-style="standard" aria-pressed="false">Standard</button>
+  <button type="button" id="tilt">Tilt</button>
+</div>
+
+<section id="time" class="card-surface" aria-label="Choose a day and time">
+  <div class="time-head">
+    <div id="days" role="group" aria-label="Day of the week"></div>
+    <button type="button" id="now" aria-pressed="true">Now</button>
+  </div>
+  <p id="window" aria-live="polite"></p>
+  <div id="range">
+    <div class="track"></div>
+    <input type="range" id="at" min="360" max="1320" step="15" aria-label="Time of day">
+  </div>
+  <div class="ticks" aria-hidden="true"><span style="left:0.00%">06</span><span style="left:12.50%">08</span><span style="left:25.00%">10</span><span style="left:37.50%">12</span><span style="left:50.00%">14</span><span style="left:62.50%">16</span><span style="left:75.00%">18</span><span style="left:87.50%">20</span><span style="left:100.00%">22</span></div>
+</section>
+
+<aside id="detail" class="card-surface" hidden></aside>
+<div id="fatal" hidden></div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
