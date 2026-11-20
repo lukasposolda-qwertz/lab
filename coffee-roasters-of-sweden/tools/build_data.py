@@ -6,8 +6,9 @@ Needs only the Python standard library. Run from the repo root:
     python tools/build_data.py            # fetch from Overpass
     python tools/build_data.py --force    # write even if the result shrank a lot
 
-Tries several Overpass servers with retries. Exits non-zero, and leaves the old file alone,
-if every server fails or the result is empty or more than 20 % smaller than the current file.
+Tries several Overpass servers with retries, moving on to the next one when an answer is
+empty, incomplete or more than 20 % smaller than the current file. Exits non-zero, and
+leaves the old file alone, if no server gives a complete answer.
 E-mail addresses and phone numbers are deliberately left out.
 """
 import datetime, json, pathlib, sys, time, urllib.parse, urllib.request
@@ -28,21 +29,35 @@ out tags center;"""
 MIN_RATIO = 0.8
 
 
-def fetch():
+def fetch(min_count=0):
+    """Return the first complete answer. An answer with fewer than min_count objects, or with
+    an Overpass "remark" (query timed out or ran out of memory server-side), counts as a
+    failed server: mirrors sometimes answer 200 with a partial result."""
     body = urllib.parse.urlencode({"data": QUERY}).encode()
+    best = 0
     for attempt in range(3):
         for url in SERVERS:
             try:
                 req = urllib.request.Request(url, data=body, headers={"User-Agent": "coffee-roasters-of-sweden/1.0"})
                 with urllib.request.urlopen(req, timeout=280) as r:
                     data = json.load(r)
-                if data.get("elements"):
-                    print(f"OK {url}: {len(data['elements'])} objects")
+                n = len(data.get("elements") or [])
+                best = max(best, n)
+                if data.get("remark"):
+                    print(f"Incomplete answer from {url}: {n} objects, {data['remark']}")
+                elif n == 0:
+                    print(f"Empty answer from {url}")
+                elif n < min_count:
+                    print(f"Partial answer from {url}: {n} objects, expected at least {min_count:.0f}")
+                else:
+                    print(f"OK {url}: {n} objects")
                     return data
-                print(f"Empty answer from {url}")
             except Exception as e:  # 429/502/504 and timeouts are common
                 print(f"Failed {url}: {e}")
         time.sleep(20 * (attempt + 1))
+    if best:
+        sys.exit(f"Refusing to overwrite: no server returned more than {best} objects, "
+                 f"expected at least {min_count:.0f} (use --force if that is right).")
     sys.exit("Every Overpass server failed; keeping the existing file.")
 
 
@@ -123,17 +138,16 @@ def normalize(e):
 
 
 def main():
-    data = fetch()
+    min_count = 0
+    if OUT.exists() and "--force" not in sys.argv:
+        min_count = len(json.loads(OUT.read_text(encoding="utf-8"))["roasters"]) * MIN_RATIO
+    data = fetch(min_count)
     items = sorted((normalize(e) for e in data["elements"]), key=lambda r: r["name"].lower())
     cache = json.loads(PLACES.read_text(encoding="utf-8")) if PLACES.exists() else {}
     for r in items:
         r["town"] = town(r, place_for(r["lat"], r["lon"], cache))
     PLACES.parent.mkdir(parents=True, exist_ok=True)
     PLACES.write_text(json.dumps(cache, ensure_ascii=False, indent=0, sort_keys=True), encoding="utf-8")
-    if OUT.exists() and "--force" not in sys.argv:
-        prev = len(json.loads(OUT.read_text(encoding="utf-8"))["roasters"])
-        if len(items) < prev * MIN_RATIO:
-            sys.exit(f"Refusing to overwrite: {len(items)} objects against {prev} before (use --force if that is right).")
     out = {
         "snapshot": datetime.date.today().isoformat(),
         "osm_base": data.get("osm3s", {}).get("timestamp_osm_base"),
