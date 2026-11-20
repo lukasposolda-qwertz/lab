@@ -1,9 +1,9 @@
 name: "Coffee roasters of Sweden: rebuild data"
 
-# Every Monday at 03:30 UTC, plus a "Run workflow" button for when you've just edited OSM.
+# The 1st of every month at 03:30 UTC (monthly, to go easy on the volunteer-run Overpass servers), plus a "Run workflow" button for when you've just edited OSM.
 on:
   schedule:
-    - cron: "30 3 * * 1"
+    - cron: "30 3 1 * *"
   workflow_dispatch:
 
 permissions:
@@ -42,6 +42,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/roasters.json data/places_cache.json
-          git commit -m "coffee-roasters-of-sweden: weekly OSM rebuild ($summary)"
+          git commit -m "coffee-roasters-of-sweden: monthly OSM rebuild ($summary)"
           git pull --rebase origin main
           git push
