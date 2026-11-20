@@ -15,7 +15,7 @@ import datetime, json, pathlib, sys, time, urllib.parse, urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "roasters.json"
-PLACES = ROOT / "data" / "places_cache.json"  # coordinate -> town, so weekly runs only look up new points
+PLACES = ROOT / "data" / "places_cache.json"  # coordinate -> town, so scheduled runs only look up new points
 SERVERS = [
     "https://overpass-api.de/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
